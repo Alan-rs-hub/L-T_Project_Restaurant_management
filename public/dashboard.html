@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Admin & Manager Management Dashboard">
+  <title>Manager Dashboard — DineFlow</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .nav-pills .nav-link {
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      border: 1px solid var(--glass-border);
+      margin-right: 0.5rem;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      transition: var(--transition);
+    }
+    .nav-pills .nav-link.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-dark fixed-top" id="mainNav">
+    <div class="container-fluid px-4">
+      <a class="navbar-brand fw-bold" href="/">
+        <i class="bi bi-egg-fried me-2"></i>DineFlow <span class="badge bg-accent ms-2">Admin Portal</span>
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto" id="navLinks"></ul>
+        <div id="userMenu" class="ms-3 d-none">
+          <div class="dropdown">
+            <button class="btn btn-outline-light btn-sm dropdown-toggle" data-bs-toggle="dropdown" id="userDropdown">
+              <i class="bi bi-person-circle me-1"></i><span id="userName">User</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark">
+              <li><span class="dropdown-item-text text-muted small" id="userRole">Role</span></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="#" onclick="logout()"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Page Header -->
+  <section class="page-header">
+    <div class="container-fluid px-4">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <h1 class="h2 fw-bold mb-1">Management Dashboard</h1>
+          <p class="text-muted mb-0">Overview, Sales Reports, Branches, Tables, and Customer Feedback</p>
+        </div>
+        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+          <button class="btn btn-outline-light btn-sm" onclick="loadAllDashboardData()">
+            <i class="bi bi-arrow-clockwise me-1"></i>Refresh Data
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Dashboard Content -->
+  <section class="py-4">
+    <div class="container-fluid px-4">
+      <!-- Top KPI Stats Row -->
+      <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3">
+          <div class="stat-card">
+            <div class="stat-icon"><i class="bi bi-cash-stack"></i></div>
+            <div class="stat-value" id="statRevenue">₹0.00</div>
+            <div class="stat-label">Total Revenue</div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+          <div class="stat-card">
+            <div class="stat-icon text-info"><i class="bi bi-bag-check"></i></div>
+            <div class="stat-value text-info" id="statOrders">0</div>
+            <div class="stat-label">Total Orders (<span id="statPendingOrders">0</span> pending)</div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+          <div class="stat-card">
+            <div class="stat-icon text-success"><i class="bi bi-calendar-check"></i></div>
+            <div class="stat-value text-success" id="statReservations">0</div>
+            <div class="stat-label">Active Reservations</div>
+          </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+          <div class="stat-card">
+            <div class="stat-icon text-warning"><i class="bi bi-buildings"></i></div>
+            <div class="stat-value text-warning" id="statBranches">0</div>
+            <div class="stat-label">Restaurant Branches</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <ul class="nav nav-pills mb-4" id="dashboardTabs" role="tablist">
+        <li class="nav-item">
+          <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-analytics">
+            <i class="bi bi-graph-up me-2"></i>Analytics & Reports
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-branches">
+            <i class="bi bi-buildings me-2"></i>Branches
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-tables">
+            <i class="bi bi-grid-3x3 me-2"></i>Tables
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-feedback">
+            <i class="bi bi-star me-2"></i>Feedback
+          </button>
+        </li>
+      </ul>
+
+      <!-- Tab Content Panels -->
+      <div class="tab-content">
+        <!-- TAB 1: ANALYTICS & REPORTS -->
+        <div class="tab-pane fade show active" id="tab-analytics">
+          <div class="row g-4">
+            <!-- Revenue by Branch -->
+            <div class="col-lg-6">
+              <div class="data-card h-100">
+                <h5 class="fw-bold mb-3"><i class="bi bi-currency-rupee me-2 text-accent"></i>Revenue by Branch</h5>
+                <div class="table-responsive">
+                  <table class="table table-dark table-dark-custom">
+                    <thead>
+                      <tr>
+                        <th>Branch</th>
+                        <th>Orders</th>
+                        <th>Avg Value</th>
+                        <th class="text-end">Revenue</th>
+                      </tr>
+                    </thead>
+                    <tbody id="revenueTableBody">
+                      <tr><td colspan="4" class="text-center py-3">Loading sales data...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Top Popular Dishes -->
+            <div class="col-lg-6">
+              <div class="data-card h-100">
+                <h5 class="fw-bold mb-3"><i class="bi bi-trophy me-2 text-warning"></i>Top Popular Dishes</h5>
+                <div class="table-responsive">
+                  <table class="table table-dark table-dark-custom">
+                    <thead>
+                      <tr>
+                        <th>Rank</th>
+                        <th>Dish Name</th>
+                        <th class="text-center">Total Qty</th>
+                        <th class="text-end">Total Revenue</th>
+                      </tr>
+                    </thead>
+                    <tbody id="popularDishesBody">
+                      <tr><td colspan="4" class="text-center py-3">Loading popular dishes...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Peak Hours Report -->
+            <div class="col-12">
+              <div class="data-card">
+                <h5 class="fw-bold mb-3"><i class="bi bi-clock-history me-2 text-info"></i>Peak Activity Hours</h5>
+                <div class="row g-3" id="peakHoursGrid">
+                  <div class="col-12 text-center py-3 text-muted">Loading peak activity breakdown...</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: BRANCH MANAGEMENT -->
+        <div class="tab-pane fade" id="tab-branches">
+          <div class="data-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="fw-bold mb-0"><i class="bi bi-buildings me-2 text-accent"></i>Manage Branches</h5>
+              <button class="btn btn-accent btn-sm" onclick="openBranchModal()">
+                <i class="bi bi-plus-lg me-1"></i>Add Branch
+              </button>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-dark table-dark-custom align-middle">
+                <thead>
+                  <tr>
+                    <th>Branch Name</th>
+                    <th>Address</th>
+                    <th>Seating Capacity</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="branchTableBody">
+                  <tr><td colspan="5" class="text-center py-3">Loading branches...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: TABLE INVENTORY -->
+        <div class="tab-pane fade" id="tab-tables">
+          <div class="data-card">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+              <h5 class="fw-bold mb-0"><i class="bi bi-grid-3x3 me-2 text-accent"></i>Table Inventory</h5>
+              <div class="d-flex gap-2">
+                <select class="form-select form-select-sm" id="tableBranchFilter" onchange="loadTables()" style="width:200px">
+                  <option value="">All Branches</option>
+                </select>
+                <button class="btn btn-accent btn-sm text-nowrap" onclick="openTableModal()">
+                  <i class="bi bi-plus-lg me-1"></i>Add Table
+                </button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-dark table-dark-custom align-middle">
+                <thead>
+                  <tr>
+                    <th>Branch</th>
+                    <th>Table Number</th>
+                    <th>Capacity</th>
+                    <th>Active</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="tableTableBody">
+                  <tr><td colspan="5" class="text-center py-3">Loading tables...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: CUSTOMER FEEDBACK -->
+        <div class="tab-pane fade" id="tab-feedback">
+          <div class="data-card">
+            <h5 class="fw-bold mb-3"><i class="bi bi-chat-heart me-2 text-warning"></i>Customer Reviews & Ratings</h5>
+            <div id="feedbackList" class="row g-3">
+              <div class="col-12 text-center py-4 text-muted">Loading feedback...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Branch Modal -->
+  <div class="modal fade" id="branchModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold" id="branchModalTitle">Add Branch</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form id="branchForm" onsubmit="saveBranch(event)">
+          <div class="modal-body">
+            <input type="hidden" id="branchModalId">
+            <div class="mb-3">
+              <label class="form-label">Branch Name *</label>
+              <input type="text" class="form-control" id="branchNameInput" placeholder="e.g. DineFlow Downtown" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Address *</label>
+              <textarea class="form-control" id="branchAddressInput" rows="2" placeholder="Street, Area, City" required></textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Total Seating Capacity</label>
+              <input type="number" class="form-control" id="branchCapacityInput" placeholder="50" min="1">
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="branchIsActive" checked>
+              <label class="form-check-label" for="branchIsActive">Branch is Active</label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-light btn-sm" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-accent btn-sm">Save Branch</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Modal -->
+  <div class="modal fade" id="tableModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold" id="tableModalTitle">Add Table</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form id="tableForm" onsubmit="saveTable(event)">
+          <div class="modal-body">
+            <input type="hidden" id="tableModalId">
+            <div class="mb-3">
+              <label class="form-label">Branch *</label>
+              <select class="form-select" id="tableModalBranch" required></select>
+            </div>
+            <div class="row g-3 mb-3">
+              <div class="col-6">
+                <label class="form-label">Table Number *</label>
+                <input type="number" class="form-control" id="tableNumberInput" min="1" placeholder="1" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label">Capacity (Seats) *</label>
+                <input type="number" class="form-control" id="tableCapacityInput" min="1" max="50" placeholder="4" required>
+              </div>
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="tableIsActive" checked>
+              <label class="form-check-label" for="tableIsActive">Table is Active for Booking</label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-light btn-sm" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-accent btn-sm">Save Table</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    let branchModal = null;
+    let tableModal = null;
+    let branches = [];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Role protection: Only admin and manager
+      if (!requireAuth(['admin', 'manager'])) return;
+
+      branchModal = new bootstrap.Modal(document.getElementById('branchModal'));
+      tableModal = new bootstrap.Modal(document.getElementById('tableModal'));
+
+      await loadAllDashboardData();
+    });
+
+    async function loadAllDashboardData() {
+      await Promise.all([
+        loadOverview(),
+        loadReports(),
+        loadBranches(),
+        loadTables(),
+        loadFeedback()
+      ]);
+    }
+
+    async function loadOverview() {
+      try {
+        const res = await api.getOverview();
+        const d = res.data;
+        document.getElementById('statRevenue').textContent = formatCurrency(d.totalRevenue || 0);
+        document.getElementById('statOrders').textContent = d.totalOrders || 0;
+        document.getElementById('statPendingOrders').textContent = d.pendingOrders || 0;
+        document.getElementById('statReservations').textContent = d.activeReservations || 0;
+      } catch (err) {
+        console.error('Failed to load overview:', err);
+      }
+    }
+
+    async function loadReports() {
+      try {
+        // 1. Sales Report
+        const salesRes = await api.getSalesReport();
+        const salesBody = document.getElementById('revenueTableBody');
+        const salesList = salesRes.data.salesByBranch;
+
+        if (salesList.length === 0) {
+          salesBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No sales recorded yet.</td></tr>';
+        } else {
+          salesBody.innerHTML = salesList.map(s => `
+            <tr>
+              <td class="fw-bold text-white">${escapeHtml(s.branchName)}</td>
+              <td>${s.totalOrders}</td>
+              <td>${formatCurrency(s.avgOrderValue)}</td>
+              <td class="text-end fw-bold text-accent">${formatCurrency(s.totalRevenue)}</td>
+            </tr>
+          `).join('');
+        }
+
+        // 2. Popular Dishes
+        const dishesRes = await api.getPopularDishes('?limit=5');
+        const dishesBody = document.getElementById('popularDishesBody');
+        const dishes = dishesRes.data.popularDishes;
+
+        if (dishes.length === 0) {
+          dishesBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No dish sales recorded yet.</td></tr>';
+        } else {
+          dishesBody.innerHTML = dishes.map((d, i) => `
+            <tr>
+              <td><span class="badge bg-accent-subtle text-accent">#${i + 1}</span></td>
+              <td class="fw-bold text-white">${escapeHtml(d.name)}</td>
+              <td class="text-center">${d.totalQuantity} ordered</td>
+              <td class="text-end fw-bold text-accent">${formatCurrency(d.totalRevenue)}</td>
+            </tr>
+          `).join('');
+        }
+
+        // 3. Peak Hours
+        const peakRes = await api.getPeakHours();
+        const peakGrid = document.getElementById('peakHoursGrid');
+        const orderHours = peakRes.data.orderPeakHours;
+
+        if (orderHours.length === 0) {
+          peakGrid.innerHTML = '<div class="col-12 text-center text-muted py-2">No activity data yet.</div>';
+        } else {
+          peakGrid.innerHTML = orderHours.map(h => {
+            const hourLabel = `${h.hour % 12 || 12}:00 ${h.hour >= 12 ? 'PM' : 'AM'}`;
+            return `
+              <div class="col-sm-6 col-md-3">
+                <div class="glass-card-inner p-3 text-center">
+                  <div class="text-muted small">${hourLabel}</div>
+                  <div class="fs-4 fw-bold text-info my-1">${h.orderCount} Orders</div>
+                  <div class="text-accent small">${formatCurrency(h.totalRevenue)}</div>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+
+      } catch (err) {
+        console.error('Reports error:', err);
+      }
+    }
+
+    async function loadBranches() {
+      try {
+        const res = await api.getBranches('?limit=50');
+        branches = res.data.branches;
+        document.getElementById('statBranches').textContent = branches.length;
+
+        const body = document.getElementById('branchTableBody');
+        const tableBranchFilter = document.getElementById('tableBranchFilter');
+        const tableModalBranch = document.getElementById('tableModalBranch');
+
+        tableBranchFilter.innerHTML = '<option value="">All Branches</option>';
+        tableModalBranch.innerHTML = '';
+
+        branches.forEach(b => {
+          tableBranchFilter.innerHTML += `<option value="${b._id}">${b.name}</option>`;
+          tableModalBranch.innerHTML += `<option value="${b._id}">${b.name}</option>`;
+        });
+
+        if (branches.length === 0) {
+          body.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No branches found.</td></tr>';
+          return;
+        }
+
+        body.innerHTML = branches.map(b => `
+          <tr>
+            <td class="fw-bold text-white">${escapeHtml(b.name)}</td>
+            <td class="text-muted small">${escapeHtml(b.address)}</td>
+            <td>${b.seatingCapacity || 'N/A'}</td>
+            <td>${b.isActive ? '<span class="badge bg-success-subtle text-success">Active</span>' : '<span class="badge bg-danger-subtle text-danger">Inactive</span>'}</td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-outline-info me-1" onclick="openEditBranchModal('${b._id}')">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger" onclick="deleteBranch('${b._id}')">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+        `).join('');
+
+      } catch (err) {
+        showToast('Failed to load branches', 'error');
+      }
+    }
+
+    // Branch Modal Handlers
+    function openBranchModal() {
+      document.getElementById('branchForm').reset();
+      document.getElementById('branchModalId').value = '';
+      document.getElementById('branchModalTitle').textContent = 'Add Branch';
+      document.getElementById('branchIsActive').checked = true;
+      branchModal.show();
+    }
+
+    async function openEditBranchModal(id) {
+      try {
+        const res = await api.getBranch(id);
+        const b = res.data.branch;
+        document.getElementById('branchModalId').value = b._id;
+        document.getElementById('branchNameInput').value = b.name;
+        document.getElementById('branchAddressInput').value = b.address;
+        document.getElementById('branchCapacityInput').value = b.seatingCapacity || '';
+        document.getElementById('branchIsActive').checked = b.isActive;
+        document.getElementById('branchModalTitle').textContent = 'Edit Branch';
+        branchModal.show();
+      } catch (err) {
+        showToast(err.message || 'Failed to fetch branch', 'error');
+      }
+    }
+
+    async function saveBranch(e) {
+      e.preventDefault();
+      const id = document.getElementById('branchModalId').value;
+      const data = {
+        name: document.getElementById('branchNameInput').value.trim(),
+        address: document.getElementById('branchAddressInput').value.trim(),
+        seatingCapacity: parseInt(document.getElementById('branchCapacityInput').value) || undefined,
+        isActive: document.getElementById('branchIsActive').checked
+      };
+
+      try {
+        if (id) {
+          await api.updateBranch(id, data);
+          showToast('Branch updated', 'success');
+        } else {
+          await api.createBranch(data);
+          showToast('Branch created', 'success');
+        }
+        branchModal.hide();
+        loadBranches();
+      } catch (err) {
+        showToast(err.message || 'Failed to save branch', 'error');
+      }
+    }
+
+    async function deleteBranch(id) {
+      if (!confirm('Are you sure you want to delete this branch?')) return;
+      try {
+        await api.deleteBranch(id);
+        showToast('Branch deleted', 'success');
+        loadBranches();
+      } catch (err) {
+        showToast(err.message || 'Failed to delete branch', 'error');
+      }
+    }
+
+    // Table Inventory Logic
+    async function loadTables() {
+      const branchId = document.getElementById('tableBranchFilter').value;
+      let query = '?limit=100';
+      if (branchId) query += `&branchId=${branchId}`;
+
+      try {
+        const res = await api.getTables(query);
+        const tables = res.data.tables;
+        const body = document.getElementById('tableTableBody');
+
+        if (tables.length === 0) {
+          body.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No tables configured.</td></tr>';
+          return;
+        }
+
+        body.innerHTML = tables.map(t => `
+          <tr>
+            <td>${escapeHtml(t.branchId?.name || 'Branch')}</td>
+            <td class="fw-bold text-white">Table ${t.tableNumber}</td>
+            <td>${t.capacity} Seats</td>
+            <td>${t.isActive ? '<span class="badge bg-success-subtle text-success">Active</span>' : '<span class="badge bg-danger-subtle text-danger">Inactive</span>'}</td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-outline-info me-1" onclick="openEditTableModal('${t._id}')">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger" onclick="deleteTable('${t._id}')">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+        `).join('');
+
+      } catch (err) {
+        showToast('Failed to load tables', 'error');
+      }
+    }
+
+    function openTableModal() {
+      document.getElementById('tableForm').reset();
+      document.getElementById('tableModalId').value = '';
+      document.getElementById('tableModalTitle').textContent = 'Add Table';
+      document.getElementById('tableIsActive').checked = true;
+      tableModal.show();
+    }
+
+    async function openEditTableModal(id) {
+      try {
+        const res = await api.getTable(id);
+        const t = res.data.table;
+        document.getElementById('tableModalId').value = t._id;
+        document.getElementById('tableModalBranch').value = t.branchId?._id || t.branchId;
+        document.getElementById('tableNumberInput').value = t.tableNumber;
+        document.getElementById('tableCapacityInput').value = t.capacity;
+        document.getElementById('tableIsActive').checked = t.isActive;
+        document.getElementById('tableModalTitle').textContent = 'Edit Table';
+        tableModal.show();
+      } catch (err) {
+        showToast(err.message || 'Failed to fetch table', 'error');
+      }
+    }
+
+    async function saveTable(e) {
+      e.preventDefault();
+      const id = document.getElementById('tableModalId').value;
+      const data = {
+        branchId: document.getElementById('tableModalBranch').value,
+        tableNumber: parseInt(document.getElementById('tableNumberInput').value),
+        capacity: parseInt(document.getElementById('tableCapacityInput').value),
+        isActive: document.getElementById('tableIsActive').checked
+      };
+
+      try {
+        if (id) {
+          await api.updateTable(id, data);
+          showToast('Table updated', 'success');
+        } else {
+          await api.createTable(data);
+          showToast('Table created', 'success');
+        }
+        tableModal.hide();
+        loadTables();
+      } catch (err) {
+        showToast(err.message || 'Failed to save table', 'error');
+      }
+    }
+
+    async function deleteTable(id) {
+      if (!confirm('Are you sure you want to delete this table?')) return;
+      try {
+        await api.deleteTable(id);
+        showToast('Table deleted', 'success');
+        loadTables();
+      } catch (err) {
+        showToast(err.message || 'Failed to delete table', 'error');
+      }
+    }
+
+    // Feedback Logic
+    async function loadFeedback() {
+      try {
+        const res = await api.getFeedback('?limit=20');
+        const feedbacks = res.data.feedbacks;
+        const container = document.getElementById('feedbackList');
+
+        if (feedbacks.length === 0) {
+          container.innerHTML = '<div class="col-12 text-center text-muted py-4">No customer feedback received yet.</div>';
+          return;
+        }
+
+        container.innerHTML = feedbacks.map(f => {
+          let starsHtml = '';
+          for (let i = 1; i <= 5; i++) {
+            starsHtml += i <= f.rating 
+              ? '<i class="bi bi-star-fill text-warning me-1"></i>' 
+              : '<i class="bi bi-star text-muted me-1"></i>';
+          }
+
+          return `
+            <div class="col-md-6">
+              <div class="glass-card-inner p-3 h-100 d-flex flex-column justify-content-between">
+                <div>
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>${starsHtml}</div>
+                    <span class="text-muted small">${formatDate(f.createdAt)}</span>
+                  </div>
+                  <p class="text-white small mb-2 fst-italic">"${escapeHtml(f.comment || 'Great experience!')}"</p>
+                </div>
+                <div class="d-flex justify-content-between text-muted small border-top pt-2" style="border-color:var(--glass-border) !important">
+                  <span><i class="bi bi-person me-1"></i>${escapeHtml(f.customerId?.name || 'Customer')}</span>
+                  <span>Order ${f.orderId?.orderNumber || ''}</span>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+      } catch (err) {
+        console.error('Feedback load error:', err);
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+  </script>
+</body>
+</html>

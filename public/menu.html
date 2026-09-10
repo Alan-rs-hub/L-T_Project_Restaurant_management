@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Explore DineFlow's delicious culinary offerings">
+  <title>Menu — DineFlow</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .category-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      color: var(--text-secondary);
+      border-radius: 20px;
+      padding: 0.4rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: var(--transition);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .category-btn:hover, .category-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .cart-drawer-btn {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      z-index: 1000;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 25px rgba(230, 126, 34, 0.4);
+      cursor: pointer;
+      transition: var(--transition);
+      border: none;
+    }
+    .cart-drawer-btn:hover {
+      transform: scale(1.08);
+    }
+    .cart-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: var(--danger);
+      color: white;
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-dark fixed-top" id="mainNav">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="/">
+        <i class="bi bi-egg-fried me-2"></i>DineFlow
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto" id="navLinks"></ul>
+        <div id="authButtons" class="ms-3">
+          <a href="login.html" class="btn btn-outline-light btn-sm me-2">Login</a>
+          <a href="register.html" class="btn btn-accent btn-sm">Sign Up</a>
+        </div>
+        <div id="userMenu" class="ms-3 d-none">
+          <div class="dropdown">
+            <button class="btn btn-outline-light btn-sm dropdown-toggle" data-bs-toggle="dropdown" id="userDropdown">
+              <i class="bi bi-person-circle me-1"></i><span id="userName">User</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark">
+              <li><span class="dropdown-item-text text-muted small" id="userRole">Role</span></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="#" onclick="logout()"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Page Header -->
+  <section class="page-header">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <h1 class="h2 fw-bold mb-1">Our Menu</h1>
+          <p class="text-muted mb-0">Crafted with passion, served with perfection</p>
+        </div>
+        <div class="col-md-4 text-md-end mt-3 mt-md-0" id="adminControls">
+          <!-- Admin/Manager action buttons injected dynamically -->
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Filter & Search Controls -->
+  <section class="py-4">
+    <div class="container">
+      <div class="row g-3 align-items-center">
+        <div class="col-md-4">
+          <label class="form-label small mb-1">Select Branch</label>
+          <select class="form-select" id="branchSelect" onchange="onBranchChange()">
+            <option value="">Loading branches...</option>
+          </select>
+        </div>
+        <div class="col-md-8">
+          <label class="form-label small mb-1">Search Dishes</label>
+          <div class="input-group">
+            <span class="input-group-text bg-dark-subtle border-secondary" style="border-color:var(--glass-border) !important">
+              <i class="bi bi-search text-muted"></i>
+            </span>
+            <input type="text" class="form-control" id="searchInput" placeholder="Search by dish name..." oninput="debounceSearch()">
+          </div>
+        </div>
+      </div>
+
+      <!-- Category Filter Pills -->
+      <div class="d-flex gap-2 overflow-auto py-3 mt-2" id="categoryTabs">
+        <button class="category-btn active" onclick="setCategory('')">All</button>
+        <button class="category-btn" onclick="setCategory('appetizer')">Appetizers</button>
+        <button class="category-btn" onclick="setCategory('main_course')">Main Courses</button>
+        <button class="category-btn" onclick="setCategory('dessert')">Desserts</button>
+        <button class="category-btn" onclick="setCategory('beverage')">Beverages</button>
+        <button class="category-btn" onclick="setCategory('side')">Sides</button>
+        <button class="category-btn" onclick="setCategory('soup')">Soups</button>
+        <button class="category-btn" onclick="setCategory('salad')">Salads</button>
+        <button class="category-btn" onclick="setCategory('special')">Specials</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Menu Items Grid -->
+  <section class="pb-5">
+    <div class="container">
+      <div class="row g-4" id="menuGrid">
+        <div class="col-12 text-center py-5">
+          <div class="spinner-border text-accent" role="status"></div>
+          <p class="text-muted mt-2">Loading menu items...</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Cart Button for Customers -->
+  <button class="cart-drawer-btn d-none" id="cartBtn" data-bs-toggle="offcanvas" data-bs-target="#cartOffcanvas">
+    <i class="bi bi-cart3 fs-4"></i>
+    <span class="cart-badge" id="cartCount">0</span>
+  </button>
+
+  <!-- Cart Offcanvas Drawer -->
+  <div class="offcanvas offcanvas-end text-bg-dark" tabindex="-1" id="cartOffcanvas" style="background:var(--bg-card) !important; border-left: 1px solid var(--glass-border); width: 400px; max-width: 90vw;">
+    <div class="offcanvas-header border-bottom border-secondary" style="border-color:var(--glass-border) !important">
+      <h5 class="offcanvas-title fw-bold"><i class="bi bi-bag-check me-2 text-accent"></i>Your Order</h5>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body d-flex flex-column">
+      <div id="cartItemsList" class="flex-grow-1 overflow-auto mb-3">
+        <!-- Cart items populated by JS -->
+      </div>
+
+      <div class="border-top pt-3" style="border-color:var(--glass-border) !important" id="cartCheckoutSection">
+        <div class="mb-3">
+          <label class="form-label small">Order Type</label>
+          <select class="form-select form-select-sm" id="orderTypeSelect">
+            <option value="dine_in">Dine-in</option>
+            <option value="takeaway">Takeaway</option>
+          </select>
+        </div>
+
+        <div class="d-flex justify-content-between text-muted small mb-1">
+          <span>Subtotal</span>
+          <span id="cartSubtotal">₹0.00</span>
+        </div>
+        <div class="d-flex justify-content-between text-muted small mb-1">
+          <span>Tax (5%)</span>
+          <span id="cartTax">₹0.00</span>
+        </div>
+        <div class="d-flex justify-content-between text-muted small mb-2">
+          <span>Service Charge (10%)</span>
+          <span id="cartService">₹0.00</span>
+        </div>
+        <div class="d-flex justify-content-between fw-bold fs-5 mb-3 text-white border-top pt-2" style="border-color:var(--glass-border) !important">
+          <span>Grand Total</span>
+          <span class="text-accent" id="cartTotal">₹0.00</span>
+        </div>
+
+        <button class="btn btn-accent w-100 py-2" id="placeOrderBtn" onclick="checkout()">
+          <i class="bi bi-credit-card me-2"></i>Place Order
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create/Edit Menu Item Modal (Admin/Manager) -->
+  <div class="modal fade" id="menuModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold" id="menuModalTitle">Add Menu Item</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <form id="menuItemForm" onsubmit="saveMenuItem(event)">
+          <div class="modal-body">
+            <input type="hidden" id="modalItemId">
+            <div class="mb-3">
+              <label class="form-label">Branch *</label>
+              <select class="form-select" id="modalBranchId" required></select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Dish Name *</label>
+              <input type="text" class="form-control" id="modalName" placeholder="e.g. Butter Chicken" required>
+            </div>
+            <div class="row g-3 mb-3">
+              <div class="col-6">
+                <label class="form-label">Category *</label>
+                <select class="form-select" id="modalCategory" required>
+                  <option value="appetizer">Appetizer</option>
+                  <option value="main_course">Main Course</option>
+                  <option value="dessert">Dessert</option>
+                  <option value="beverage">Beverage</option>
+                  <option value="side">Side</option>
+                  <option value="soup">Soup</option>
+                  <option value="salad">Salad</option>
+                  <option value="special">Special</option>
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="form-label">Price (₹) *</label>
+                <input type="number" step="0.01" min="0" class="form-control" id="modalPrice" placeholder="299.00" required>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Description</label>
+              <textarea class="form-control" id="modalDescription" rows="2" placeholder="Brief description of the dish..."></textarea>
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="modalIsAvailable" checked>
+              <label class="form-check-label" for="modalIsAvailable">Available for ordering</label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-light btn-sm" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-accent btn-sm" id="saveMenuBtn">Save Dish</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    let currentCategory = '';
+    let currentBranchId = '';
+    let searchTimer = null;
+    let branches = [];
+    let cart = {}; // { menuItemId: { item, qty } }
+    let menuItemModal = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      menuItemModal = new bootstrap.Modal(document.getElementById('menuModal'));
+      setupRoleUI();
+      await loadBranches();
+      await loadMenu();
+    });
+
+    function setupRoleUI() {
+      const role = getUserRole();
+      const adminControls = document.getElementById('adminControls');
+      const cartBtn = document.getElementById('cartBtn');
+
+      if (role === 'admin' || role === 'manager') {
+        adminControls.innerHTML = `
+          <button class="btn btn-accent" onclick="openAddMenuModal()">
+            <i class="bi bi-plus-lg me-1"></i>Add Menu Item
+          </button>
+        `;
+      } else {
+        // Customer or guest gets the cart
+        cartBtn.classList.remove('d-none');
+      }
+    }
+
+    async function loadBranches() {
+      try {
+        const res = await api.getBranches('?limit=50&active=true');
+        branches = res.data.branches;
+        const select = document.getElementById('branchSelect');
+        const modalBranchSelect = document.getElementById('modalBranchId');
+
+        select.innerHTML = '<option value="">All Branches</option>';
+        modalBranchSelect.innerHTML = '';
+
+        branches.forEach(b => {
+          select.innerHTML += `<option value="${b._id}">${b.name} (${b.address})</option>`;
+          modalBranchSelect.innerHTML += `<option value="${b._id}">${b.name}</option>`;
+        });
+
+        if (branches.length > 0) {
+          // Select first branch by default if available
+          select.value = branches[0]._id;
+          currentBranchId = branches[0]._id;
+        }
+      } catch (err) {
+        showToast('Failed to load branches', 'error');
+      }
+    }
+
+    function onBranchChange() {
+      currentBranchId = document.getElementById('branchSelect').value;
+      // Clear cart if branch changes to avoid mixed-branch orders
+      cart = {};
+      updateCartUI();
+      loadMenu();
+    }
+
+    function setCategory(cat) {
+      currentCategory = cat;
+      document.querySelectorAll('#categoryTabs .category-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (cat === '' && btn.textContent.trim() === 'All') btn.classList.add('active');
+        else if (cat && btn.getAttribute('onclick').includes(cat)) btn.classList.add('active');
+      });
+      loadMenu();
+    }
+
+    function debounceSearch() {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        loadMenu();
+      }, 350);
+    }
+
+    async function loadMenu() {
+      const grid = document.getElementById('menuGrid');
+      const search = document.getElementById('searchInput').value.trim();
+      let query = '?limit=100';
+
+      if (currentBranchId) query += `&branchId=${currentBranchId}`;
+      if (currentCategory) query += `&category=${currentCategory}`;
+      if (search) query += `&search=${encodeURIComponent(search)}`;
+
+      try {
+        const res = await api.getMenu(query);
+        const items = res.data.menuItems;
+
+        if (items.length === 0) {
+          grid.innerHTML = `
+            <div class="col-12 empty-state">
+              <i class="bi bi-cup-hot"></i>
+              <h5>No dishes found</h5>
+              <p class="text-muted small">Try choosing a different branch or category filter.</p>
+            </div>
+          `;
+          return;
+        }
+
+        const role = getUserRole();
+        const isAdmin = role === 'admin' || role === 'manager';
+
+        grid.innerHTML = items.map(item => `
+          <div class="col-md-6 col-lg-4">
+            <div class="menu-item-card d-flex flex-column justify-content-between ${!item.isAvailable ? 'opacity-75' : ''}">
+              <div>
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <span class="category-badge">${categoryName(item.category)}</span>
+                  ${item.isAvailable 
+                    ? '<span class="badge bg-success-subtle text-success small px-2 py-1 rounded">In Stock</span>' 
+                    : '<span class="badge bg-danger-subtle text-danger small px-2 py-1 rounded">Unavailable</span>'}
+                </div>
+                <h5 class="fw-bold mb-1">${escapeHtml(item.name)}</h5>
+                <p class="text-muted small mb-3">${escapeHtml(item.description || 'Specially prepared by our chefs using fresh ingredients.')}</p>
+                <div class="text-muted small mb-2"><i class="bi bi-geo-alt me-1"></i>${item.branchId?.name || 'Branch'}</div>
+              </div>
+
+              <div class="pt-3 border-top d-flex justify-content-between align-items-center" style="border-color:var(--glass-border) !important">
+                <div class="price">${formatCurrency(item.price)}</div>
+                <div>
+                  ${isAdmin ? `
+                    <button class="btn btn-sm btn-outline-info me-1" onclick="openEditMenuModal('${item._id}')" title="Edit">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger me-1" onclick="deleteDish('${item._id}')" title="Delete">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                    <button class="btn btn-sm ${item.isAvailable ? 'btn-outline-warning' : 'btn-outline-success'}" onclick="toggleAvailability('${item._id}', ${!item.isAvailable})" title="Toggle Availability">
+                      <i class="bi bi-power"></i>
+                    </button>
+                  ` : `
+                    ${item.isAvailable ? `
+                      <button class="btn btn-accent btn-sm px-3" onclick="addToCart('${item._id}', '${escapeJs(item.name)}', ${item.price})">
+                        <i class="bi bi-plus-lg me-1"></i>Add
+                      </button>
+                    ` : `
+                      <button class="btn btn-secondary btn-sm px-3" disabled>Sold Out</button>
+                    `}
+                  `}
+                </div>
+              </div>
+            </div>
+          </div>
+        `).join('');
+
+      } catch (err) {
+        grid.innerHTML = `
+          <div class="col-12 text-center py-5 text-danger">
+            <i class="bi bi-exclamation-triangle fs-2 mb-2"></i>
+            <p>Failed to load menu: ${err.message || 'Server error'}</p>
+          </div>
+        `;
+      }
+    }
+
+    // Admin/Manager Modal Handlers
+    function openAddMenuModal() {
+      document.getElementById('menuItemForm').reset();
+      document.getElementById('modalItemId').value = '';
+      document.getElementById('menuModalTitle').textContent = 'Add Menu Item';
+      if (currentBranchId) document.getElementById('modalBranchId').value = currentBranchId;
+      document.getElementById('modalIsAvailable').checked = true;
+      menuItemModal.show();
+    }
+
+    async function openEditMenuModal(id) {
+      try {
+        const res = await api.getMenuItem(id);
+        const item = res.data.menuItem;
+        document.getElementById('modalItemId').value = item._id;
+        document.getElementById('modalBranchId').value = item.branchId?._id || item.branchId;
+        document.getElementById('modalName').value = item.name;
+        document.getElementById('modalCategory').value = item.category;
+        document.getElementById('modalPrice').value = item.price;
+        document.getElementById('modalDescription').value = item.description || '';
+        document.getElementById('modalIsAvailable').checked = item.isAvailable;
+        document.getElementById('menuModalTitle').textContent = 'Edit Menu Item';
+        menuItemModal.show();
+      } catch (err) {
+        showToast('Error loading item: ' + err.message, 'error');
+      }
+    }
+
+    async function saveMenuItem(e) {
+      e.preventDefault();
+      const id = document.getElementById('modalItemId').value;
+      const data = {
+        branchId: document.getElementById('modalBranchId').value,
+        name: document.getElementById('modalName').value.trim(),
+        category: document.getElementById('modalCategory').value,
+        price: parseFloat(document.getElementById('modalPrice').value),
+        description: document.getElementById('modalDescription').value.trim(),
+        isAvailable: document.getElementById('modalIsAvailable').checked
+      };
+
+      try {
+        if (id) {
+          await api.updateMenuItem(id, data);
+          showToast('Menu item updated successfully!', 'success');
+        } else {
+          await api.createMenuItem(data);
+          showToast('Menu item added successfully!', 'success');
+        }
+        menuItemModal.hide();
+        loadMenu();
+      } catch (err) {
+        showToast(err.message || 'Failed to save menu item', 'error');
+      }
+    }
+
+    async function deleteDish(id) {
+      if (!confirm('Are you sure you want to delete this menu item?')) return;
+      try {
+        await api.deleteMenuItem(id);
+        showToast('Menu item deleted', 'success');
+        loadMenu();
+      } catch (err) {
+        showToast(err.message || 'Failed to delete menu item', 'error');
+      }
+    }
+
+    async function toggleAvailability(id, newStatus) {
+      try {
+        await api.updateMenuItem(id, { isAvailable: newStatus });
+        showToast(`Item marked as ${newStatus ? 'available' : 'unavailable'}`, 'success');
+        loadMenu();
+      } catch (err) {
+        showToast(err.message || 'Failed to update status', 'error');
+      }
+    }
+
+    // Customer Cart Logic
+    function addToCart(id, name, price) {
+      if (!cart[id]) {
+        cart[id] = { id, name, price, quantity: 1 };
+      } else {
+        cart[id].quantity += 1;
+      }
+      showToast(`Added "${name}" to cart`, 'success');
+      updateCartUI();
+    }
+
+    function changeCartQty(id, delta) {
+      if (!cart[id]) return;
+      cart[id].quantity += delta;
+      if (cart[id].quantity <= 0) {
+        delete cart[id];
+      }
+      updateCartUI();
+    }
+
+    function updateCartUI() {
+      const itemsList = document.getElementById('cartItemsList');
+      const cartCount = document.getElementById('cartCount');
+      const keys = Object.keys(cart);
+      const totalCount = keys.reduce((acc, k) => acc + cart[k].quantity, 0);
+      cartCount.textContent = totalCount;
+
+      if (keys.length === 0) {
+        itemsList.innerHTML = `
+          <div class="empty-state py-4">
+            <i class="bi bi-cart-x"></i>
+            <h6>Your cart is empty</h6>
+            <p class="text-muted small">Add some delicious dishes from the menu to start ordering!</p>
+          </div>
+        `;
+        document.getElementById('cartSubtotal').textContent = '₹0.00';
+        document.getElementById('cartTax').textContent = '₹0.00';
+        document.getElementById('cartService').textContent = '₹0.00';
+        document.getElementById('cartTotal').textContent = '₹0.00';
+        document.getElementById('placeOrderBtn').disabled = true;
+        return;
+      }
+
+      document.getElementById('placeOrderBtn').disabled = false;
+
+      let subtotal = 0;
+      itemsList.innerHTML = keys.map(k => {
+        const it = cart[k];
+        const itemTotal = it.price * it.quantity;
+        subtotal += itemTotal;
+        return `
+          <div class="d-flex justify-content-between align-items-center mb-3 p-2 rounded" style="background:rgba(255,255,255,0.03); border:1px solid var(--glass-border)">
+            <div>
+              <div class="fw-600 text-white">${escapeHtml(it.name)}</div>
+              <div class="text-muted small">${formatCurrency(it.price)} × ${it.quantity} = <span class="text-accent fw-bold">${formatCurrency(itemTotal)}</span></div>
+            </div>
+            <div class="d-flex align-items-center gap-1">
+              <button class="btn btn-outline-light btn-sm px-2 py-0" onclick="changeCartQty('${k}', -1)">-</button>
+              <span class="px-2 fw-bold text-white">${it.quantity}</span>
+              <button class="btn btn-outline-light btn-sm px-2 py-0" onclick="changeCartQty('${k}', 1)">+</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const tax = subtotal * 0.05;
+      const service = subtotal * 0.10;
+      const grandTotal = subtotal + tax + service;
+
+      document.getElementById('cartSubtotal').textContent = formatCurrency(subtotal);
+      document.getElementById('cartTax').textContent = formatCurrency(tax);
+      document.getElementById('cartService').textContent = formatCurrency(service);
+      document.getElementById('cartTotal').textContent = formatCurrency(grandTotal);
+    }
+
+    async function checkout() {
+      if (!isLoggedIn()) {
+        showToast('Please login to place an order', 'warning');
+        setTimeout(() => { window.location.href = 'login.html'; }, 1000);
+        return;
+      }
+
+      if (!currentBranchId) {
+        showToast('Please select a branch first', 'warning');
+        return;
+      }
+
+      const keys = Object.keys(cart);
+      if (keys.length === 0) {
+        showToast('Cart is empty', 'warning');
+        return;
+      }
+
+      const orderType = document.getElementById('orderTypeSelect').value;
+      const items = keys.map(k => ({
+        menuItemId: k,
+        quantity: cart[k].quantity
+      }));
+
+      const btn = document.getElementById('placeOrderBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Placing Order...';
+
+      try {
+        const res = await api.createOrder({
+          branchId: currentBranchId,
+          orderType,
+          items
+        });
+
+        showToast('Order placed successfully! Redirecting to orders...', 'success');
+        cart = {};
+        updateCartUI();
+        
+        // Hide offcanvas
+        const offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('cartOffcanvas'));
+        if (offcanvas) offcanvas.hide();
+
+        setTimeout(() => {
+          window.location.href = 'orders.html';
+        }, 1200);
+      } catch (err) {
+        showToast(err.message || 'Failed to place order', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-credit-card me-2"></i>Place Order';
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function escapeJs(str) {
+      if (!str) return '';
+      return String(str).replace(/'/g, "\\'").replace(/"/g, '\\"');
+    }
+  </script>
+</body>
+</html>
